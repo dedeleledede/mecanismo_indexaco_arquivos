@@ -41,4 +41,90 @@ mecanismo_indexacao_arquivos/
   Makefile
   stopwords.txt
 
-  - commit 1
+  - commit 1 ("estrutura do projeto")
+
+  
+Nesse projeto, o main eh basicamente um roteador de comandos:
+le os argumentos da linha de comando
+decide qual modo o usuario quer
+
+modo indexacao: indice construir <caminho_do_diretorio>
+modo busca: indice buscar <termo1> <termo2> ...
+
+verifica se o comando esta correto (ler e validar parametros)
+chama as partes do sistema que fazem o trabalho
+tratar erros basicos (comandos errados, falta de arquivo index.dat)
+
+primeiro passo: mapear todos os cenarios que o main precisa tratar
+---
+usuario roda sem nenhum argumento
+err: "erro: argumentos invalidos (modelo: indice modo(indexacao/busca) <dir>/<termo>)"
+---
+usuario roda com modo sem parametros suficientes - indexacao
+err: "erro: argumentos insuficientes (<dir>/<termo>)"
+---
+usuario roda indexacao corretamente
+ex: ./indice construir ./docs
+---
+validar que o comando tem os argumentos certos
+criar os objetos responsaveis por indexar
+mandar construir o indice e salvar em index.dat
+
+sucesso ou erro
+---
+usuario roda busca sem termos
+ex: ./indice buscar
+err: "erro: argumentos insuficientes (<termo>)"
+---
+usuario roda busca com termos
+ex: ./indice "buscar redes computadores"
+---
+verificar se existe index.dat no diretório atual
+se nao existir, avisar: “rode a indexacao primeiro”
+se existir, carregar o indice
+mandar buscar os termos e exibir os arquivos encontrados
+---
+usuario digita um modo invalido
+ex: ./indice destruir ./docs
+err: "erro: argumentos invalidos (modelo: indice modo(indexacao/busca) <dir>/<termo>)"
+---
+
+segundo passo: transformar isso num fluxograma mental do main
+
+O programa começa >
+
+- tem argumentos suficientes?
+
+ - nao > mostra mensagem de uso > encerra
+ - sim > continua
+
+le o modo >
+
+- se o modo for construir
+
+ - verifica se foi passado dir
+  - se nao > mostra mensagem de erro especifica > encerra
+  - se foi > continua
+
+ - varre o diretorio
+ - constroi o indice
+ - salva em index.dat
+ - sucesso ou erro
+
+- se o modo for buscar
+
+ - verifica se tem ao menos um termo apos a palavra buscar
+  - se tiver → mostra erro > encerra
+
+ - verifica se o arquivo index.dat existe
+  - se nao existir > diz “indice nao encontrado, rode a indexacao primeiro” > encerra
+  - se existir > carrega indice, processa a busca, mostra os arquivos encontrados
+
+ - se o modo nao for nenhum dos dois 
+  - modo invalido > erro > encerra
+
+terceiro passo: planejar a versao minima viavel do main
+
+ter um main que apenas reconhece o modo e imprime mensagens de teste.
+modo construir “entrando no modo de indexacao com diretorio: X”
+modo buscar “entrando no modo de busca com termos: ...”
