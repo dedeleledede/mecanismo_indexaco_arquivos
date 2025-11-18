@@ -1,5 +1,5 @@
 #include <iostream>
-#include <stdlib.h>
+#include <string>
 
 using namespace std;
 
@@ -14,7 +14,7 @@ Modo parse(const char* s){
 int main(int argc, char* argv[]){
 
     if (argc < 2){
-        fprintf(stderr, "ERRO: Argumentos insuficientes\n(Modelo de uso: indice modo(construir/busca) <dir>/<termo>)\n");
+        cerr << "ERRO: Argumentos insuficientes\n(Modelo de uso: indice modo(construir/busca) <dir>/<termo>)" << endl;
         return -1;
     }
 
@@ -24,7 +24,7 @@ int main(int argc, char* argv[]){
     switch(m){
         case construir:            
             if (argc < 3){
-                fprintf(stderr, "ERRO: Argumentos insuficientes\n(indice construir <dir>)\n");
+                cerr << "ERRO: Argumentos insuficientes\n(indice construir <dir>)" << endl;
                 return -1;
             }
 
@@ -35,7 +35,7 @@ int main(int argc, char* argv[]){
             break;
         case busca:
             if (argc < 3){
-                fprintf(stderr, "ERRO: Argumentos insuficientes\n(indice busca <termo1> <termo2> ...)\n");
+                cerr << "ERRO: Argumentos insuficientes\n(indice busca <termo1> <termo2> ...)" << endl;
                 return -1;
             }
 
@@ -57,8 +57,10 @@ int main(int argc, char* argv[]){
 
             break;
         default:
-            fprintf(stderr, "ERRO: Argumentos de modo invalidos \n(modelo: indice modo(construir/busca)\n");
+            cerr << "ERRO: Argumentos de modo invalidos \n(modelo: indice modo(construir/busca) <dir>/<termo>)" << endl;
             return -1;
     }
     return 0;
-}
+}   
+
+            

@@ -130,3 +130,50 @@ modo construir “entrando no modo de indexacao com diretorio: X”
 modo buscar “entrando no modo de busca com termos: ...”
 
  - commit 2 (main minimo viavel)
+
+ agora para construir os headers
+
+ - index
+1. escolher a estrutura de dados
+2. definir a interface publica
+
+---
+
+index eh como um banco de dados em memoria
+1. indice invertido
+2. mapeamento de documentos
+
+estrutura de dados:
+  hashmap para caminho > id
+  hashmap para id > caminho
+
+mapeamento:
+  1. saber a partir de filepath, o id e vice-versa
+  
+---
+classe index
+ - mapa de indice inverso
+ - mapa de id > path
+ - mapa de path > id
+
+doc_set_id
+
+add_word()
+  
+getters
+  get_filepath(int doc_id);
+    
+  get_docs_from_word();
+    
+  get_inverted_index();  
+    
+  get_filepath_to_id();
+    
+  get_id_to_filepath();
+
+setters
+set_inverted_index()
+set_doc_maps()
+---
+
+commit 3
