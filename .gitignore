@@ -1,3 +1,4 @@
 .git
 machado/
-a.out
+*.o
+indice
