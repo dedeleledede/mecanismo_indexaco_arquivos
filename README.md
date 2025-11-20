@@ -176,4 +176,17 @@ set_inverted_index()
 set_doc_maps()
 ---
 
-commit 3
+commit 3 (index headers e implementacao)
+
+TextProcessor (pre-processamento)
+
+- receber uma string com texto
+- converter para minusculas
+- remover pontuação
+- quebrar em palavras
+- eliminar stopwords
+
+build header
+implement
+
+commit 4 (text_processor)
