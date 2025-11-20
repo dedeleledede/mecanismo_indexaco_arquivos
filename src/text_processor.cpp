@@ -1,4 +1,4 @@
-#include "text_processor.h"
+#include "../include/text_processor.h"
 
 #include <fstream>
 #include <cctype>
@@ -7,7 +7,7 @@ using namespace std;
 
 string TextProcessor::normalize(const string& text) const{
     string resultado = {};
-    for (int i = 0; i < text.length(); i++){
+    for (size_t i = 0; i < text.length(); i++){
         unsigned char c = tolower(text[i]);
 
         if (isalnum(c)){
@@ -30,7 +30,7 @@ vector<string> TextProcessor::split_words(const string& normalized) const{
     vector<string> words = {};
     string current = {};
 
-    for (int i = 0; i < normalized.length(); i++){
+    for (size_t i = 0; i < normalized.length(); i++){
         unsigned char c = normalized[i];
         if (isspace(c)){
             if (!current.empty()){
