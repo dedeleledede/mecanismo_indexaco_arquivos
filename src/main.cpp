@@ -1,6 +1,10 @@
 #include <iostream>
 #include <string>
 
+#include "index.h"
+#include "indexer.h"
+#include "text_processor.h"
+
 using namespace std;
 
 enum Modo {construir, busca, invalid};
@@ -18,11 +22,10 @@ int main(int argc, char* argv[]){
         return -1;
     }
 
-
     Modo m = parse(argv[1]);
 
     switch(m){
-        case construir:            
+        case construir:{        
             if (argc < 3){
                 cerr << "ERRO: Argumentos insuficientes\n(indice construir <dir>)" << endl;
                 return -1;
@@ -32,8 +35,18 @@ int main(int argc, char* argv[]){
             //indexacao aqui
             //criar objetos, varrer diretorio, construir indice, salvar index.dat etc
 
+            string dir = argv[2];
+            Index index;
+            TextProcessor text_processor;
+            text_processor.load_stopwords("../data/stopwords.txt");
+
+            Indexer indexer(index, text_processor);
+            indexer.build(dir);
+
             break;
-        case busca:
+        }
+
+        case busca:{
             if (argc < 3){
                 cerr << "ERRO: Argumentos insuficientes\n(indice busca <termo1> <termo2> ...)" << endl;
                 return -1;
@@ -54,8 +67,8 @@ int main(int argc, char* argv[]){
             exibir a lista de arquivos
             */
 
-
             break;
+        }
         default:
             cerr << "ERRO: Argumentos de modo invalidos \n(modelo: indice modo(construir/busca) <dir>/<termo>)" << endl;
             return -1;
