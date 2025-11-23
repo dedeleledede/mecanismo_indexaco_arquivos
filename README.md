@@ -16,7 +16,7 @@
 
 processo de pensamento:
 como representar o indice invertido em c++ usando stl
-tipo da chave tipo do valor
+tipo da chave tipo do valor 
 como mapearia nome_arquivo > id e id > nome_arquivo
 
 construir ambiente basico e makefile compilar "hello from index world"
