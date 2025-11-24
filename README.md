@@ -429,3 +429,5 @@ principais regras do Makefile:
   - remove `build/` ou os `.o` e o binario
 
 commit 7 serializer heaeder, makefile
+
+commit 8 serializer
