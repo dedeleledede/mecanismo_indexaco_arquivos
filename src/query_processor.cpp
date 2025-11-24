@@ -1,5 +1,4 @@
 #include "query_processor.h"
-#include <algorithm>
 
 using namespace std;
 
@@ -21,9 +20,26 @@ Index::doc_set_id QueryProcessor::process_terms(const vector<string>& terms) con
         }
         else{
             Index::doc_set_id temp;
-            // calcula a intersecao entre result e docs e coloca em temp
-            set_intersection(result.begin(), result.end(), docs.begin(), docs.end(), std::inserter(temp, temp.begin()));
-            result = temp; 
+            
+            auto it1 = result.begin();
+            auto end1 = result.end();
+            auto it2 = docs.begin();
+            auto end2 = result.end();
+
+            while (it1 != end1 && it2 != end2){
+                if (*it1 < *it2){
+                    it1++;
+                }
+                else if (*it2 < *it1){
+                    it2++;
+                }
+                else{
+                    temp.insert(*it1);
+                    it1++;
+                    it2++;
+                }
+            }
+            result = temp;
         }
 
         if (result.empty())
