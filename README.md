@@ -1,437 +1,364 @@
-# Construção de Um Mecanismo de Indexação de Arquivos
+### Como compilar
 
-## O programa tem dois modos:
+Requisitos:
 
-``indice construir <caminho_do_diretorio>``
-``indice buscar <termo1> <termo2> ... <termoN>``
+* Compilador C++ com suporte a C++17 (ex.: `g++` no Ubuntu 20.04+).
+* `make` instalado.
+* Nenhuma biblioteca externa além da STL.
 
-## Blocos principais de responsabilidade são:
+No diretório raiz do projeto (`mecanismo_indexacao_arquivos/`), rode:
 
-- Index - guarda o indice invertido + mapeamento ID <> arquivo
-- Text Processor - limpa texto, tokeniza, tira pontuação/stopwords
-- Indexer - percorre diretorio, le arquivos, alimenta o Index 
-- Serializer - salva/carrega o Index no arquivo binário index.dat
-- Query Processor - recebe termos de busca e devolve arquivos
-- Command Line Interface - interpreta argc/argv e chama o resto
+```bash
+make
+```
 
-processo de pensamento:
-como representar o indice invertido em c++ usando stl
-tipo da chave tipo do valor 
-como mapearia nome_arquivo > id e id > nome_arquivo
+Isso gera o executável:
 
-construir ambiente basico e makefile compilar "hello from index world"
+```bash
+./indice
+```
 
+Para limpar os `.o` e o binário:
+
+```bash
+make clean
+```
+
+---
+
+### Como executar
+
+O programa tem dois modos de operação, ambos chamados a partir do binário `indice`.
+
+#### 1) Modo indexação
+
+```bash
+./indice construir <caminho_do_diretorio>
+```
+
+Exemplo:
+
+```bash
+./indice construir data/machado
+```
+
+O que acontece aqui:
+
+* O programa varre recursivamente o diretório informado (`data/machado`, no exemplo).
+* Para cada arquivo de texto, lê o conteúdo, normaliza e tokeniza.
+* Remove stopwords usando o arquivo `data/stopwords.txt`.
+* Constrói o índice invertido em memória.
+* Salva tudo (índice + mapeamento de documentos) em **binário** no arquivo:
+
+```txt
+data/index.dat
+```
+
+Se algo der errado (diretório inválido, erro de leitura, falha ao salvar), uma mensagem de erro é exibida no terminal e o programa encerra com código diferente de zero.
+
+#### 2) Modo busca
+
+```bash
+./indice buscar <termo1> <termo2> ... <termoN>
+```
+
+Exemplos:
+
+```bash
+./indice buscar rede
+./indice buscar vida morte
+```
+
+O que acontece aqui:
+
+* O programa verifica se o arquivo `data/index.dat` existe.
+
+  * Se não existir, avisa para rodar a indexação primeiro.
+* Carrega o índice invertido e o mapeamento de documentos a partir de `data/index.dat`.
+* Normaliza os termos de busca com o `TextProcessor` (minúsculas, sem pontuação, sem stopwords).
+* Usa o `QueryProcessor` para buscar:
+
+  * Se for **uma palavra**, retorna todos os documentos onde o termo aparece.
+  * Se forem **múltiplas palavras**, faz uma busca do tipo **AND** (retorna só arquivos que contêm **todas** as palavras).
+* Imprime na tela os **caminhos completos** dos arquivos encontrados.
+
+Saída típica:
+
+```bash
+./indice buscar rede
+Entrando em modo busca com argumentos: rede 
+Documentos encontrados:
+/caminho/completo/.../data/machado/conto/contosFluminenses.txt
+...
+```
+
+Se nenhum documento for encontrado, o programa informa isso em vez de imprimir uma lista vazia.
+
+---
+
+## Estrutura de diretórios
+
+A organização esperada do projeto é algo nessa linha:
+
+```txt
 mecanismo_indexacao_arquivos/
   src/
     main.cpp
+    cli.cpp
     index.cpp
     indexer.cpp
     text_processor.cpp
     serializer.cpp
     query_processor.cpp
-    cli.cpp
   include/
+    cli.h
     index.h
     indexer.h
     text_processor.h
     serializer.h
     query_processor.h
-    cli.h
-  machado/
+  data/
+    stopwords.txt
+    index.dat        (gerado em tempo de execução)
+    machado/         (coleção de textos para teste)
   Makefile
-  stopwords.txt
-
-  - commit 1 ("estrutura do projeto")
-
-  
-Nesse projeto, o main eh basicamente um roteador de comandos:
-le os argumentos da linha de comando
-decide qual modo o usuario quer
-
-modo indexacao: indice construir <caminho_do_diretorio>
-modo busca: indice buscar <termo1> <termo2> ...
-
-verifica se o comando esta correto (ler e validar parametros)
-chama as partes do sistema que fazem o trabalho
-tratar erros basicos (comandos errados, falta de arquivo index.dat)
-
-primeiro passo: mapear todos os cenarios que o main precisa tratar
----
-usuario roda sem nenhum argumento
-err: "erro: argumentos invalidos (modelo: indice modo(indexacao/busca) <dir>/<termo>)"
----
-usuario roda com modo sem parametros suficientes - indexacao
-err: "erro: argumentos insuficientes (<dir>/<termo>)"
----
-usuario roda indexacao corretamente
-ex: ./indice construir ./docs
----
-validar que o comando tem os argumentos certos
-criar os objetos responsaveis por indexar
-mandar construir o indice e salvar em index.dat
-
-sucesso ou erro
----
-usuario roda busca sem termos
-ex: ./indice buscar
-err: "erro: argumentos insuficientes (<termo>)"
----
-usuario roda busca com termos
-ex: ./indice buscar redes computadores
----
-verificar se existe index.dat no diretório atual
-se nao existir, avisar: “rode a indexacao primeiro”
-se existir, carregar o indice
-mandar buscar os termos e exibir os arquivos encontrados
----
-usuario digita um modo invalido
-ex: ./indice destruir ./docs
-err: "erro: argumentos invalidos (modelo: indice modo(indexacao/busca) <dir>/<termo>)"
----
-
-segundo passo: transformar isso num fluxograma mental do main
-
-O programa começa >
-
-- tem argumentos suficientes?
-
- - nao > mostra mensagem de uso > encerra
- - sim > continua
-
-le o modo >
-
-- se o modo for construir
-
- - verifica se foi passado dir
-  - se nao > mostra mensagem de erro especifica > encerra
-  - se foi > continua
-
- - varre o diretorio
- - constroi o indice
- - salva em index.dat
- - sucesso ou erro
-
-- se o modo for buscar
-
- - verifica se tem ao menos um termo apos a palavra buscar
-  - se nao tiver > mostra erro > encerra
-
- - verifica se o arquivo index.dat existe
-  - se nao existir > diz “indice nao encontrado, rode a indexacao primeiro” > encerra
-  - se existir > carrega indice, processa a busca, mostra os arquivos encontrados
-
- - se o modo nao for nenhum dos dois 
-  - modo invalido > erro > encerra
-
-terceiro passo: planejar a versao minima viavel do main
-
-ter um main que apenas reconhece o modo e imprime mensagens de teste.
-modo construir “entrando no modo de indexacao com diretorio: X”
-modo buscar “entrando no modo de busca com termos: ...”
-
- - commit 2 (main minimo viavel)
-
- agora para construir os headers
-
- - index
-1. escolher a estrutura de dados
-2. definir a interface publica
+  README.md
+```
 
 ---
 
-index eh como um banco de dados em memoria
-1. indice invertido
-2. mapeamento de documentos
+## Fluxo de construção do projeto (histórico mental / “commits”)
 
-estrutura de dados:
-  hashmap para caminho > id
-  hashmap para id > caminho
+Aqui vai o fluxo que fui seguindo, atualizado até o estado atual.
 
-mapeamento:
-  1. saber a partir de filepath, o id e vice-versa
-  
----
-classe index
- - mapa de indice inverso
- - mapa de id > path
- - mapa de path > id
-
-doc_set_id
-
-add_word()
-  
-getters
-  get_filepath(int doc_id);
-    
-  get_docs_from_word();
-    
-  get_inverted_index();  
-    
-  get_filepath_to_id();
-    
-  get_id_to_filepath();
-
-setters
-set_inverted_index()
-set_doc_maps()
 ---
 
-commit 3 (index headers e implementacao)
+### Push 1 – Estrutura do projeto
 
-TextProcessor (pre-processamento)
+* Criar a “skeleton” do projeto:
 
-- receber uma string com texto
-- converter para minusculas
-- remover pontuação
-- quebrar em palavras
-- eliminar stopwords
+  * pasta `src/` para os `.cpp`;
+  * pasta `include/` para os `.h`;
+  * pasta `data/` para `stopwords.txt`, `index.dat` e o diretório `machado/`;
+  * `Makefile` básico para compilar tudo em um binário chamado `indice`.
 
-build header
-implement
+* Ideia central: o programa será uma CLI que oferece **dois modos**:
 
-TextProcessor: pre processamento de texto
+  ```txt
+  indice construir <caminho_do_diretorio>
+  indice buscar <termo1> <termo2> ... <termoN>
+  ```
 
-- ter um componente que recebe texto bruto e devolve um vetor de palavras normalizadas sem stopwords
-
-responsabilidades:
-
-- carregar lista de stopwords de um arquivo
-- normalizar texto:
-
-  - converter para minusculas
-  - remover pontuacao e simbolos, trocando por espaco
-- quebrar em palavras (tokenizar)
-- remover stopwords
-
-estrutura interna:
-
-- `unordered_set<string> stopwords;`
-
-  - armazena todas as stopwords para consulta O(1)
-
-interface (cabecalho):
-
-- parte privada:
-
-  - `string normalize(const string& text) const;`
-
-    - percorre o texto caractere a caractere
-    - converte para minusculas
-    - mantem apenas caracteres alfanumericos
-    - troca o resto por espaco
-  - `vector<string> split_words(const string& normalized) const;`
-
-    - percorre a string normalizada
-    - monta palavras acumulando caracteres nao espaco
-    - quando encontra espaco, fecha a palavra corrente
-  - `bool is_stopword(const string& word) const;`
-
-    - verifica se `word` esta em `stopwords`
-
-- parte publica:
-
-  - `TextProcessor() = default;`
-  - `void load_stopwords(const string& filepath);`
-
-    - abre o arquivo
-    - le palavra por palavra
-    - insere cada uma em `stopwords`
-  - `vector<string> process(const string& text) const;`
-
-    - `normalize(text)` -> `split_words(...)` -> filtrar:
-
-      - so mantem palavras que nao sao stopwords
-
-commit 4 (text_processor)
-
-Indexer: construcao do indice a partir de arquivos
-
-- ter um componente que:
-
-  - percorre um diretorio
-  - le arquivos de texto
-  - passa o conteudo pelo `TextProcessor`
-  - alimenta o `Index` com as palavras encontradas
-
-dependencias:
-
-- referencia para `Index`
-- referencia para `TextProcessor`
-- `std::filesystem` para varrer diretorios
-- `ifstream` para ler arquivos
-
-interface:
-
-- parte privada:
-
-  - `Index& index;`
-  - `TextProcessor& text_processor;`
-  - `void process_file(const string& filepath);`
-
-    - abre o arquivo
-    - le o conteudo completo para uma string
-    - chama `text_processor.process(conteudo)`
-
-      - recebe `vector<string>` de palavras normalizadas
-    - para cada palavra:
-
-      - `index.add_word(word, filepath);`
-
-- parte publica:
-
-  - construtor:
-
-    - `Indexer(Index& idx, TextProcessor& tp);`
-
-      - guarda referencias para `index` e `text_processor`
-  - metodo principal:
-
-    - `void build(const string& root_dir);`
-
-      - usa `recursive_directory_iterator` para varrer `root_dir`
-      - para cada arquivo regular:
-
-        - obtem o caminho como string
-        - chama `process_file(path);`
-
-commit 5 (indexer)
-
-main: integracao de Index, TextProcessor e Indexer no modo construir
-
-estado do projeto ate aqui:
-
-- `Index` guarda o indice em memoria
-- `TextProcessor` gera tokens normalizados e sem stopwords
-- `Indexer` construi o indice a partir de um diretorio
-
-papel do main apos esses commits:
-
-- interpretar `argc` / `argv`
-- decidir modo:
-
-  - `construir`
-  - `buscar`
-- validar argumentos
-- instanciar e conectar os componentes certos
-- reportar erros basicos ao usuario
-
-fluxo no case construir
-
-1. validar argumentos:
-
-   - se argc < 3
-
-     - imprimir mensagem de erro: argumentos insuficientes
-     - encerrar com codigo de erro
-2. obter diretorio:
-3. criar componentes
-4. construir indice
-
-- ainda em versao preliminar
-- apenas:
-
-  - valida argumentos
-  - monta string de consulta a partir de `argv[2..]`
-  - usa `TextProcessor` para normalizar e remover stopwords
-  - imprime os termos resultantes para debug
-
-commit 6 (main: modo construir, fluxo geral)
-
-Serializer: persistencia do indice
-
-objetivo:
-
-- permitir que o indice seja salvo em disco e recarregado depois
-- arquivo alvo: `index.dat` (formato texto simples)
-
-interface:
-
-- `static bool save(const Index& index, const string& filename);`
-
-  - abre arquivo para escrita
-  - grava:
-
-    - quantidade de documentos
-    - linhas `id filepath`
-    - quantidade de termos
-    - linhas `palavra qtdIds id1 id2 ...`
-- `static bool load(Index& index, const string& filename);`
-
-  - abre arquivo para leitura
-  - le:
-
-    - numero de documentos
-    - monta `filepath_to_id` e `id_to_filepath`
-    - numero de termos
-    - monta `inverted_index_map`
-  - ao final:
-
-    - chama `index.set_doc_maps(...)`
-    - chama `index.set_inverted_index(...)`
-
-formato de arquivo adotado:
-
-- primeira parte: documentos
-
-  - linha 1: `N` (numero de documentos)
-  - proximas N linhas:
-
-    - `docId filepath`
-- segunda parte: termos
-
-  - linha seguinte: `M` (numero de palavras distintas)
-  - proximas M linhas:
-
-    - `palavra qtdIds id1 id2 id3 ...`
-
-limitacao assumida:
-
-- caminhos de arquivo nao contem espacos
 ---
 
-Makefile
+### Push 2 – main / CLI mínimo viável
 
-estrutura de pastas alvo:
+* Definir o contrato da linha de comando:
 
-- `src/`
+  * nenhum argumento → mensagem de erro de uso;
+  * primeiro argumento é o **modo** (`construir` ou `buscar`);
+  * validar quantidade mínima de parâmetros para cada modo.
 
-  - `main.cpp`
-  - `index.cpp`
-  - `text_processor.cpp`
-  - `indexer.cpp`
-  - `serializer.cpp`
+* Nesta fase, o main/CLI só fazia:
 
-- `include/`
+  * identificar o modo;
+  * imprimir mensagens do tipo:
 
-  - `index.h`
-  - `text_processor.h`
-  - `indexer.h`
-  - `serializer.h`
+    * “entrando em modo de indexacao com diretorio: X”
+    * “entrando em modo de busca com termos: ...”
 
-- `build/`
+* Sem “trabalho real” ainda, só a casca de orquestração.
 
-  - arquivos objeto `.o`
-  - binario final
-- `stopwords.txt` e diretorio com textos (ex: `machado/` ou `data/`)
+---
 
-principais regras do Makefile:
+### Push 3 – Index (headers e implementação)
 
-- `all`: regra padrao, chama a geracao do binario
-- regra para `build/indice`:
+* Projeto do **Index** como “banco de dados em memória”:
 
-  - linka todos os `.o`
-- regra generica:
+  * índice invertido:
 
-  - `build/%.o` depende de `src/%.cpp`
-  - compila com `-std=c++17 -Iinclude`
-- `clean`:
+    ```cpp
+    std::unordered_map<std::string, std::set<int>> // palavra -> conjunto de docIds
+    ```
+  * mapeamento de documentos:
 
-  - remove `build/` ou os `.o` e o binario
+    * `std::unordered_map<std::string, int> path_to_id;`  // caminho → id
+    * `std::unordered_map<int, std::string> id_to_path;`  // id → caminho
 
-commit 7 serializer heaeder, makefile
+* Métodos principais:
 
-commit 8 serializer
+  * `add_word(palavra, filepath)`:
 
-query processor h
+    * garante um docId para o caminho (criando se não existir),
+    * registra o docId no conjunto da palavra.
 
-qp cpp
+  * `get_docs_from_word(palavra)`:
+
+    * devolve (por referência constante) o `std::set<int>` com os ids dos documentos.
+
+  * `get_filepath(doc_id)`:
+
+    * devolve a string com o caminho completo do arquivo (ou string vazia se não existir).
+
+  * getters/setters “crus” para o `Serializer`:
+
+    * `get_inverted_index()`
+    * `get_filepath_to_id()`
+    * `get_id_to_filepath()`
+    * `set_inverted_index(...)`
+    * `set_doc_maps(...)`
+
+---
+
+### Push 4 – TextProcessor (normalização de texto)
+
+* Responsabilidade do `TextProcessor`:
+
+  * receber uma `std::string` com texto bruto;
+  * converter tudo para minúsculas;
+  * remover pontuações (manter só `isalnum`);
+  * trocar tudo que não for letra/dígito por espaço;
+  * quebrar em palavras (tokens) com base em espaços;
+  * remover:
+
+    * strings vazias,
+    * stopwords carregadas de `data/stopwords.txt`.
+
+* Interface típica:
+
+  * `void load_stopwords(const std::string& filepath);`
+  * `std::string normalize(const std::string& text) const;`
+  * `std::vector<std::string> split_words(const std::string& normalized) const;`
+  * `std::vector<std::string> process(const std::string& text) const;`
+
+    * que basicamente faz `normalize -> split_words -> filtra stopwords`.
+
+---
+
+### Push 5 – Indexer (varrer diretório e popular o índice)
+
+* O `Indexer` é o “orquestrador” da indexação:
+
+  * guarda **referências** para:
+
+    * um `Index` (onde os dados serão guardados),
+    * um `TextProcessor` (para limpar o conteúdo).
+
+* Métodos principais:
+
+  * `build(const std::string& root_dir)`:
+
+    * usa `std::filesystem::recursive_directory_iterator` em cima de `fs::absolute(root_dir)`;
+    * para cada `regular_file`, chama `process_file`.
+
+  * `process_file(const std::string& filepath)`:
+
+    * abre o arquivo (`std::ifstream`);
+    * lê o conteúdo inteiro para uma string;
+    * chama `text_processor.process(conteudo)` para obter as palavras;
+    * para cada palavra, chama `index.add_word(palavra, filepath)`.
+
+* A partir daqui, rodar `./indice construir data/machado` já preenche um índice em memória (sem ainda salvar no disco).
+
+---
+
+### Push 6 – Integrar modo construir (CLI + Indexer + TextProcessor + Index)
+
+* No modo `construir`, o main/CLI passou a:
+
+  * validar `argc` (precisa de `<dir>`);
+
+  * criar:
+
+    * `Index index;`
+    * `TextProcessor text_processor;`
+    * carregar `text_processor.load_stopwords("data/stopwords.txt");`
+    * `Indexer indexer(index, text_processor);`
+
+  * chamar:
+
+    * `indexer.build(dir);`
+
+  * em seguida, chamar o `Serializer::save(index, "data/index.dat")` para persistir o índice em disco (binário).
+
+* Se qualquer etapa falha (diretório inválido, erro de leitura, erro de gravação), a CLI mostra uma mensagem clara e encerra.
+
+---
+
+### Push 7 – Serializer (binário) + reuso do índice
+
+* Implementação do `Serializer` para salvar/carregar o `Index` em **formato binário**:
+
+  * salvar, em ordem:
+
+    * tamanho do mapa invertido,
+    * para cada palavra:
+
+      * comprimento da string,
+      * bytes da palavra,
+      * quantidade de docIds,
+      * cada docId (int) em binário;
+    * tamanho do mapa `filepath → id`,
+    * pares (string do caminho completo, int id),
+    * tamanho do mapa `id → filepath`,
+    * pares (int id, string caminho).
+
+  * carregar na ordem inversa, reconstruindo:
+
+    * `inverted_index_map`,
+    * `path_to_id`,
+    * `id_to_path`.
+
+* Detalhes importantes:
+
+  * formato estritamente binário (sem `<<` ou `>>` de texto);
+  * tamanho de strings guardado como inteiro fixo (`std::uint32_t`), seguido de `write`/`read` dos bytes;
+  * o índice guarda **caminhos completos** dos arquivos, de forma que você pode:
+
+    * indexar em um diretório,
+    * depois rodar o programa a partir de outro diretório,
+    * e mesmo assim a busca continua apontando para o caminho absoluto.
+
+---
+
+### Push 8 – QueryProcessor (busca AND com interseção manual)
+
+* Criação do `QueryProcessor`, recebendo `const Index&` no construtor.
+
+* Método principal:
+
+  ```cpp
+  Index::doc_set_id process_terms(const std::vector<std::string>& terms) const;
+  ```
+
+  * recebe um vetor de termos **já normalizados** (sem stopwords);
+  * para cada termo:
+
+    * pega o conjunto de docIds com `index.get_docs_from_word(term)`;
+    * mantém um conjunto “resultado parcial”;
+    * faz a **interseção** entre o conjunto acumulado e o conjunto da vez.
+
+* A interseção é feita “na mão”, com um laço que percorre dois `std::set<int>` como em um merge de vetores ordenados, **sem** usar `std::set_intersection`, atendendo à exigência do PDF.
+
+* Resultado final: conjunto de docIds de arquivos que contêm **todas** as palavras consultadas (AND).
+
+---
+
+### Push 9 – Modo buscar completo (CLI + TextProcessor + Serializer + QueryProcessor)
+
+* No modo `buscar`, a CLI passou a:
+
+  1. Validar se há pelo menos um termo após `buscar`.
+  2. Construir a string da query a partir de `argv[2..]`.
+  3. Criar `Index index;`.
+  4. Criar `TextProcessor text_processor;` e carregar stopwords.
+  5. Verificar se `data/index.dat` existe e é carregável via `Serializer::load`.
+
+     * Se não, avisa: “rode a indexacao primeiro” / erro de carregamento.
+  6. Normalizar os termos com o `TextProcessor` e obter o vetor de tokens.
+  7. Criar `QueryProcessor query_processor(index);`.
+  8. Chamar `process_terms(terms)` para obter o conjunto de docIds.
+  9. Se o conjunto estiver vazio → informar que nenhum documento foi encontrado.
+  10. Caso contrário, iterar nos docIds e imprimir `index.get_filepath(id)` — que hoje são caminhos completos (como visto na sua saída com "rede").
+
+---
