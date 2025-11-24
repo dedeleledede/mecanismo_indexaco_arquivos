@@ -9,14 +9,14 @@
 
 - Index - guarda o indice invertido + mapeamento ID <> arquivo
 - Text Processor - limpa texto, tokeniza, tira pontuação/stopwords
-- Indexer - percorre diretorio, le arquivos, alimenta o Index
+- Indexer - percorre diretorio, le arquivos, alimenta o Index 
 - Serializer - salva/carrega o Index no arquivo binário index.dat
 - Query Processor - recebe termos de busca e devolve arquivos
 - Command Line Interface - interpreta argc/argv e chama o resto
 
 processo de pensamento:
 como representar o indice invertido em c++ usando stl
-tipo da chave tipo do valor
+tipo da chave tipo do valor 
 como mapearia nome_arquivo > id e id > nome_arquivo
 
 construir ambiente basico e makefile compilar "hello from index world"
