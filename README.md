@@ -9,7 +9,7 @@
 
 - Index - guarda o indice invertido + mapeamento ID <> arquivo
 - Text Processor - limpa texto, tokeniza, tira pontuação/stopwords
-- Indexer - percorre diretorio, le arquivos, alimenta o Index
+- Indexer - percorre diretorio, le arquivos, alimenta o Index 
 - Serializer - salva/carrega o Index no arquivo binário index.dat
 - Query Processor - recebe termos de busca e devolve arquivos
 - Command Line Interface - interpreta argc/argv e chama o resto
