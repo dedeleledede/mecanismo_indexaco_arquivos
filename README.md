@@ -431,3 +431,7 @@ principais regras do Makefile:
 commit 7 serializer heaeder, makefile
 
 commit 8 serializer
+
+query processor h
+
+qp cpp
