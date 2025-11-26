@@ -8,7 +8,7 @@ Requisitos:
 
 No diretório raiz do projeto (`mecanismo_indexacao_arquivos/`), rode:
 
-```bash
+```bash 
 make
 ```
 
