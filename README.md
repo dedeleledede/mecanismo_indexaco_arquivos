@@ -17,7 +17,7 @@ Isso gera o executável:
 ```bash 
 ./indice
 ```
-
+ 
 Para limpar os `.o` e o binário:
 
 ```bash
